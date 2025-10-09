@@ -19,9 +19,10 @@ ENV NODE_ENV=production
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 COPY . .
 RUN npm run build
+RUN npm prune --omit=dev
 
 RUN chown -R node:node /app
 USER node
