@@ -8,6 +8,12 @@ import PQueue from "p-queue";
 const app = express();
 app.use(express.json({ limit: "10mb" }));
 
+app.use((req, res, next) => {
+  console.log('🛰️ Incoming Request:', req.method, req.url);
+  console.log('📦 Body:', req.body);
+  next();
+});
+
 const PORT = Number(process.env.PORT || 8080);
 const CONCURRENCY = Number(process.env.CONCURRENCY || 1);
 const CALLBACK_TOKEN = process.env.CALLBACK_TOKEN || "";
