@@ -1,4 +1,5 @@
 import express from "express";
+import type { Request, Response } from "express";
 import { S3, PutObjectCommand } from "@aws-sdk/client-s3";
 import fetch from "cross-fetch";
 import puppeteer from "puppeteer";
@@ -75,9 +76,9 @@ async function processJob(data: Payload) {
   return { url: fileUrl, key };
 }
 
-app.get("/healthz", (_req, res) => res.json({ ok: true, queueSize: queue.size, pending: queue.pending }));
+app.get("/healthz", (_req: Request, res: Response) => res.json({ ok: true, queueSize: queue.size, pending: queue.pending }));
 
-app.post("/render", async (req, res) => {
+app.post("/render", async (req: Request, res: Response) => {
   const payload: Payload = req.body;
   const hToken = req.get("X-Worker-Token");
   if (CALLBACK_TOKEN && hToken !== CALLBACK_TOKEN && payload.token !== CALLBACK_TOKEN) {
