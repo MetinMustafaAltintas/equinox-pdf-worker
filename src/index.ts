@@ -27,12 +27,19 @@ const s3 = new S3({
 const queue = new PQueue({ concurrency: CONCURRENCY });
 
 async function renderPdf(html: string): Promise<Buffer> {
+  console.log("🧩 renderPdf started...");
   const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
   try {
     const page = await browser.newPage();
+    console.log("📄 Setting HTML content...");
     await page.setContent(html, { waitUntil: "networkidle0", timeout: 120000 });
+    console.log("🖨️ Generating PDF...");
     const buf = await page.pdf({ format: "a4", printBackground: true, preferCSSPageSize: true, timeout: 120000 });
+    console.log("✅ PDF generated successfully!");
     return Buffer.from(buf);
+  } catch (err) {
+    console.error("❌ renderPdf error:", err);
+    throw err;
   } finally {
     await browser.close();
   }
@@ -57,7 +64,6 @@ function attrs(obj?: Record<string, string>) {
 async function processJob(data: Payload) {
     const { jobId, readingId, type, pdfData, html, output, callbackUrl } = data;
 
-    // Birden fazla sayfa varsa hepsini tek PDF olarak birleştiriyoruz
     let htmlToRender = "";
         if (html) {
             htmlToRender = html;
@@ -74,8 +80,11 @@ async function processJob(data: Payload) {
         } else {
             htmlToRender = `<html><body><h1>${type}</h1><pre>${JSON.stringify(pdfData?.meta || {}, null, 2)}</pre></body></html>`;
         }
-    const pdfBuffer = await renderPdf(htmlToRender);
 
+        console.log(`⚙️ Starting render for job ${jobId}, ${pdfData?.pages?.length || 0} pages...`);
+        const pdfBuffer = await renderPdf(htmlToRender);
+        console.log(`✅ Render complete for job ${jobId}, buffer size: ${pdfBuffer.length}`);
+        
     const folder = output?.folder || "readings";
     const fileName = output?.fileName || `${readingId}-${Date.now()}.pdf`;
     const key = `${folder}/${fileName}`;
