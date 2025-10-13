@@ -55,31 +55,42 @@ function attrs(obj?: Record<string, string>) {
 }
 
 async function processJob(data: Payload) {
-  const { jobId, readingId, type, pdfData, html, output, callbackUrl } = data;
+    const { jobId, readingId, type, pdfData, html, output, callbackUrl } = data;
 
-  const htmlToRender =
-    html ??
-    (pdfData?.pages?.length
-      ? `<html ${attrs(pdfData.pages[0].htmlAttributes)}><head>${pdfData.pages[0].head || ""}</head><body>${pdfData.pages[0].body}</body></html>`
-      : `<html><body><h1>${type}</h1><pre>${JSON.stringify(pdfData?.meta || {}, null, 2)}</pre></body></html>`);
+    // Birden fazla sayfa varsa hepsini tek PDF olarak birleştiriyoruz
+    let htmlToRender = "";
+        if (html) {
+            htmlToRender = html;
+        } else if (pdfData?.pages?.length) {
+            const allPagesHtml = pdfData.pages
+            .map((page, index) => {
+            const head = page.head || "";
+            const body = page.body || "";
+            const attrsString = attrs(page.htmlAttributes);
+            return `<section data-page="${index + 1}"><html ${attrsString}><head>${head}</head><body>${body}</body></html></section>`;
+        })
+        .join("<div style='page-break-after: always;'></div>");
+        htmlToRender = `<html><head></head><body>${allPagesHtml}</body></html>`;
+        } else {
+            htmlToRender = `<html><body><h1>${type}</h1><pre>${JSON.stringify(pdfData?.meta || {}, null, 2)}</pre></body></html>`;
+        }
+    const pdfBuffer = await renderPdf(htmlToRender);
 
-  const pdfBuffer = await renderPdf(htmlToRender);
+    const folder = output?.folder || "readings";
+    const fileName = output?.fileName || `${readingId}-${Date.now()}.pdf`;
+    const key = `${folder}/${fileName}`;
 
-  const folder = output?.folder || "readings";
-  const fileName = output?.fileName || `${readingId}-${Date.now()}.pdf`;
-  const key = `${folder}/${fileName}`;
+    await s3.send(new PutObjectCommand({ Bucket: process.env.SPACES_BUCKET!, Key: key, Body: pdfBuffer, ContentType: "application/pdf", ACL: "private" }));
 
-  await s3.send(new PutObjectCommand({ Bucket: process.env.SPACES_BUCKET!, Key: key, Body: pdfBuffer, ContentType: "application/pdf", ACL: "private" }));
+    const fileUrl = `${process.env.SPACES_ENDPOINT!.replace("https://", `https://${process.env.SPACES_BUCKET}.`)}/${key}`;
 
-  const fileUrl = `${process.env.SPACES_ENDPOINT!.replace("https://", `https://${process.env.SPACES_BUCKET}.`)}/${key}`;
+    await fetch(callbackUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Callback-Token": CALLBACK_TOKEN },
+        body: JSON.stringify({ jobId, readingId, status: "done", url: fileUrl })
+    });
 
-  await fetch(callbackUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Callback-Token": CALLBACK_TOKEN },
-    body: JSON.stringify({ jobId, readingId, status: "done", url: fileUrl })
-  });
-
-  return { url: fileUrl, key };
+    return { url: fileUrl, key };
 }
 
 app.get("/healthz", (_req: Request, res: Response) => res.json({ ok: true, queueSize: queue.size, pending: queue.pending }));
