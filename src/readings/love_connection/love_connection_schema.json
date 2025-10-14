@@ -1,0 +1,954 @@
+{
+  "name": "love_connection_reading",
+  "description": "Generate a comprehensive love connection astrological reading with compatibility analysis, relationship insights, and personalized advice for two partners.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "locale": {
+        "type": "string",
+        "description": "Language locale for the reading",
+        "default": "en"
+      },
+      "assetsBasePath": {
+        "type": "string",
+        "description": "Base path for assets and images",
+        "default": "./assets"
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the reading was generated"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the reading format"
+          },
+          "readingType": {
+            "type": "string",
+            "description": "Type of reading being generated"
+          }
+        },
+        "required": ["generatedAt", "version", "readingType"]
+      },
+      "common": {
+        "type": "object",
+        "properties": {
+          "locale": {
+            "type": "string",
+            "description": "Language locale"
+          },
+          "seeker": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the person seeking the reading"
+              },
+              "sunSign": {
+                "type": "string",
+                "description": "Zodiac sun sign",
+                "enum": ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+              },
+              "moonSign": {
+                "type": "string",
+                "description": "Zodiac moon sign",
+                "enum": ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+              },
+              "ascendant": {
+                "type": "string",
+                "description": "Rising sign or ascendant",
+                "enum": ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+              },
+              "element": {
+                "type": "string",
+                "description": "Element of the sun sign",
+                "enum": ["Fire", "Earth", "Air", "Water"]
+              },
+              "modality": {
+                "type": "string",
+                "description": "Modality of the sun sign",
+                "enum": ["Cardinal", "Fixed", "Mutable"]
+              },
+              "polarity": {
+                "type": "string",
+                "description": "Polarity of the sun sign",
+                "enum": ["Positive", "Negative"]
+              },
+              "birthDate": {
+                "type": "string",
+                "format": "date",
+                "description": "Birth date in YYYY-MM-DD format"
+              },
+              "birthTime": {
+                "type": "string",
+                "pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
+                "description": "Birth time in HH:MM format"
+              },
+              "birthPlace": {
+                "type": "string",
+                "description": "Birth place or location"
+              },
+              "loveLanguage": {
+                "type": "string",
+                "description": "Primary love language",
+                "enum": ["Words of Affirmation", "Acts of Service", "Receiving Gifts", "Quality Time", "Physical Touch"]
+              }
+            },
+            "required": ["name", "sunSign", "moonSign", "ascendant", "element", "modality", "polarity", "birthDate", "birthTime", "birthPlace", "loveLanguage"]
+          },
+          "partner": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the partner"
+              },
+              "sunSign": {
+                "type": "string",
+                "description": "Zodiac sun sign",
+                "enum": ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+              },
+              "moonSign": {
+                "type": "string",
+                "description": "Zodiac moon sign",
+                "enum": ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+              },
+              "ascendant": {
+                "type": "string",
+                "description": "Rising sign or ascendant",
+                "enum": ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+              },
+              "element": {
+                "type": "string",
+                "description": "Element of the sun sign",
+                "enum": ["Fire", "Earth", "Air", "Water"]
+              },
+              "modality": {
+                "type": "string",
+                "description": "Modality of the sun sign",
+                "enum": ["Cardinal", "Fixed", "Mutable"]
+              },
+              "polarity": {
+                "type": "string",
+                "description": "Polarity of the sun sign",
+                "enum": ["Positive", "Negative"]
+              },
+              "birthDate": {
+                "type": "string",
+                "format": "date",
+                "description": "Birth date in YYYY-MM-DD format"
+              },
+              "birthTime": {
+                "type": "string",
+                "pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
+                "description": "Birth time in HH:MM format"
+              },
+              "birthPlace": {
+                "type": "string",
+                "description": "Birth place or location"
+              },
+              "loveLanguage": {
+                "type": "string",
+                "description": "Primary love language",
+                "enum": ["Words of Affirmation", "Acts of Service", "Receiving Gifts", "Quality Time", "Physical Touch"]
+              }
+            },
+            "required": ["name", "sunSign", "moonSign", "ascendant", "element", "modality", "polarity", "birthDate", "birthTime", "birthPlace", "loveLanguage"]
+          },
+          "scorecard": {
+            "type": "object",
+            "properties": {
+              "compatibilityScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Overall compatibility score (0-100)"
+              },
+              "chemistryScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Physical and emotional chemistry score (0-100)"
+              },
+              "trustScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Trust and reliability score (0-100)"
+              },
+              "growthPotential": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Potential for relationship growth (0-100)"
+              },
+              "summary": {
+                "type": "string",
+                "description": "Overall relationship summary"
+              },
+              "highlights": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Key strengths of the relationship"
+              },
+              "challenges": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Potential challenges in the relationship"
+              }
+            },
+            "required": ["compatibilityScore", "chemistryScore", "trustScore", "growthPotential", "summary", "highlights", "challenges"]
+          },
+          "narrative": {
+            "type": "object",
+            "properties": {
+              "overview": {
+                "type": "string",
+                "description": "Comprehensive overview of the relationship"
+              },
+              "shortSummary": {
+                "type": "string",
+                "description": "Brief summary of the relationship dynamic"
+              },
+              "keywords": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Keywords describing the relationship"
+              },
+              "mantra": {
+                "type": "string",
+                "description": "Relationship mantra or affirmation"
+              }
+            },
+            "required": ["overview", "shortSummary", "keywords", "mantra"]
+          }
+        },
+        "required": ["locale", "seeker", "partner", "scorecard", "narrative"]
+      },
+      "pages": {
+        "type": "object",
+        "properties": {
+          "page1": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Main title for page 1"
+              },
+              "subtitles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Subtitle text for page 1"
+              },
+              "main_image_url": {
+                "type": "string",
+                "description": "URL for main image"
+              },
+              "main_image_alt": {
+                "type": "string",
+                "description": "Alt text for main image"
+              }
+            },
+            "required": ["title", "subtitles"]
+          },
+          "page2": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for profile page"
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "Section title"
+                    },
+                    "subtitle": {
+                      "type": "string",
+                      "description": "Section subtitle"
+                    },
+                    "icon": {
+                      "type": "string",
+                      "description": "Icon URL"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Section description"
+                    }
+                  },
+                  "required": ["title", "subtitle", "description"]
+                },
+                "description": "Profile sections for both partners"
+              }
+            },
+            "required": ["title", "sections"]
+          },
+          "page3": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for compatibility overview page"
+              },
+              "overview": {
+                "type": "string",
+                "description": "Compatibility overview text"
+              }
+            },
+            "required": ["title", "overview"]
+          },
+          "page4": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for elemental harmony page"
+              },
+              "mainSection": {
+                "type": "object",
+                "properties": {
+                  "percentage": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Main compatibility percentage"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Main section title"
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "description": "Main section subtitle"
+                  }
+                },
+                "required": ["percentage", "title", "subtitle"]
+              },
+              "miniSections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "percentage": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100,
+                      "description": "Mini section percentage"
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Mini section title"
+                    },
+                    "icon": {
+                      "type": "string",
+                      "description": "Mini section icon URL"
+                    }
+                  },
+                  "required": ["percentage", "title"]
+                },
+                "description": "Mini compatibility sections"
+              },
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Summary title"
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "description": "Summary subtitle"
+                  }
+                },
+                "required": ["title", "subtitle"]
+              }
+            },
+            "required": ["title", "mainSection", "miniSections", "summary"]
+          },
+          "page5": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for communication styles page"
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "Communication style title"
+                    },
+                    "subtitle": {
+                      "type": "string",
+                      "description": "Communication style subtitle"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Communication style description"
+                    }
+                  },
+                  "required": ["title", "subtitle", "description"]
+                },
+                "description": "Communication style sections"
+              }
+            },
+            "required": ["title", "sections"]
+          },
+          "page6": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for communication style page"
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "Section title"
+                    },
+                    "subtitle": {
+                      "type": "string",
+                      "description": "Section subtitle"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Section description"
+                    },
+                    "tips": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Communication tips"
+                    }
+                  },
+                  "required": ["title", "subtitle", "description"]
+                },
+                "description": "Communication style sections with tips"
+              }
+            },
+            "required": ["title", "sections"]
+          },
+          "page7": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for emotional connection page"
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "Section title"
+                    },
+                    "subtitle": {
+                      "type": "string",
+                      "description": "Section subtitle"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Section description"
+                    }
+                  },
+                  "required": ["title", "subtitle", "description"]
+                },
+                "description": "Emotional connection sections"
+              }
+            },
+            "required": ["title", "sections"]
+          },
+          "page8": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for love languages page"
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "Love language title"
+                    },
+                    "subtitle": {
+                      "type": "string",
+                      "description": "Love language subtitle"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Love language description"
+                    }
+                  },
+                  "required": ["title", "subtitle", "description"]
+                },
+                "description": "Love language sections"
+              }
+            },
+            "required": ["title", "sections"]
+          },
+          "page9": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for shared values page"
+              },
+              "overview": {
+                "type": "string",
+                "description": "Shared values overview"
+              }
+            },
+            "required": ["title", "overview"]
+          },
+          "page10": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for final thoughts page"
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "Section title"
+                    },
+                    "subtitle": {
+                      "type": "string",
+                      "description": "Section subtitle"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Section description"
+                    }
+                  },
+                  "required": ["title", "subtitle", "description"]
+                },
+                "description": "Final thoughts sections"
+              },
+              "bad_time_section": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Challenging times title"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of challenging times"
+                  }
+                },
+                "required": ["title", "items"]
+              }
+            },
+            "required": ["title", "sections", "bad_time_section"]
+          },
+          "page11": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for relationship advice page"
+              },
+              "adviceItems": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "Advice item title"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Advice item description"
+                    }
+                  },
+                  "required": ["title", "description"]
+                },
+                "description": "Relationship advice items"
+              }
+            },
+            "required": ["title", "adviceItems"]
+          },
+          "page12": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for sexual compatibility page"
+              },
+              "mainSection": {
+                "type": "object",
+                "properties": {
+                  "percentage": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Main compatibility percentage"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Main section title"
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "description": "Main section subtitle"
+                  }
+                },
+                "required": ["percentage", "title", "subtitle"]
+              },
+              "miniSections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "percentage": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100,
+                      "description": "Mini section percentage"
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Mini section title"
+                    },
+                    "icon": {
+                      "type": "string",
+                      "description": "Mini section icon URL"
+                    }
+                  },
+                  "required": ["percentage", "title"]
+                },
+                "description": "Mini compatibility sections"
+              },
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Summary title"
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "description": "Summary subtitle"
+                  }
+                },
+                "required": ["title", "subtitle"]
+              }
+            },
+            "required": ["title", "mainSection", "miniSections", "summary"]
+          },
+          "page13": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for future potential page"
+              },
+              "mainSection": {
+                "type": "object",
+                "properties": {
+                  "percentage": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Main compatibility percentage"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Main section title"
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "description": "Main section subtitle"
+                  }
+                },
+                "required": ["percentage", "title", "subtitle"]
+              },
+              "miniSections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "percentage": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100,
+                      "description": "Mini section percentage"
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Mini section title"
+                    },
+                    "icon": {
+                      "type": "string",
+                      "description": "Mini section icon URL"
+                    }
+                  },
+                  "required": ["percentage", "title"]
+                },
+                "description": "Mini compatibility sections"
+              },
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Summary title"
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "description": "Summary subtitle"
+                  }
+                },
+                "required": ["title", "subtitle"]
+              }
+            },
+            "required": ["title", "mainSection", "miniSections", "summary"]
+          },
+          "page14": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for challenges and solutions page"
+              },
+              "mainSection": {
+                "type": "object",
+                "properties": {
+                  "percentage": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Main compatibility percentage"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Main section title"
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "description": "Main section subtitle"
+                  }
+                },
+                "required": ["percentage", "title", "subtitle"]
+              },
+              "miniSections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "percentage": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100,
+                      "description": "Mini section percentage"
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Mini section title"
+                    },
+                    "icon": {
+                      "type": "string",
+                      "description": "Mini section icon URL"
+                    }
+                  },
+                  "required": ["percentage", "title"]
+                },
+                "description": "Mini compatibility sections"
+              },
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Summary title"
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "description": "Summary subtitle"
+                  }
+                },
+                "required": ["title", "subtitle"]
+              }
+            },
+            "required": ["title", "mainSection", "miniSections", "summary"]
+          },
+          "page15": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for daily harmony page"
+              },
+              "mainSection": {
+                "type": "object",
+                "properties": {
+                  "percentage": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "description": "Main compatibility percentage"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Main section title"
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "description": "Main section subtitle"
+                  }
+                },
+                "required": ["percentage", "title", "subtitle"]
+              },
+              "miniSections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "percentage": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100,
+                      "description": "Mini section percentage"
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Mini section title"
+                    },
+                    "icon": {
+                      "type": "string",
+                      "description": "Mini section icon URL"
+                    }
+                  },
+                  "required": ["percentage", "title"]
+                },
+                "description": "Mini compatibility sections"
+              },
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Summary title"
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "description": "Summary subtitle"
+                  }
+                },
+                "required": ["title", "subtitle"]
+              }
+            },
+            "required": ["title", "mainSection", "miniSections", "summary"]
+          },
+          "page16": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for compatibility factors page"
+              },
+              "compatibilityFactors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Compatibility factor name"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Compatibility factor description"
+                    },
+                    "icon": {
+                      "type": "string",
+                      "description": "Compatibility factor icon URL"
+                    },
+                    "score": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100,
+                      "description": "Compatibility factor score"
+                    }
+                  },
+                  "required": ["name", "description", "score"]
+                },
+                "description": "Compatibility factors"
+              }
+            },
+            "required": ["title", "compatibilityFactors"]
+          },
+          "page17": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title for relationship tips page"
+              },
+              "adviceItems": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "description": "Advice item title"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Advice item description"
+                    }
+                  },
+                  "required": ["title", "description"]
+                },
+                "description": "Relationship tips"
+              }
+            },
+            "required": ["title", "adviceItems"]
+          }
+        },
+        "description": "Page-specific content for the love connection reading",
+        "required": ["page1", "page2", "page3", "page4", "page5", "page6", "page7", "page8", "page9", "page10", "page11", "page12", "page13", "page14", "page15", "page16", "page17"]
+      }
+    },
+    "required": ["locale", "assetsBasePath", "metadata", "common", "pages"]
+  }
+}
