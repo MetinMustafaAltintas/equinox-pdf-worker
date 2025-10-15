@@ -15,7 +15,7 @@ function isRecord(value: unknown): value is StringMap {
 function listTemplatePageSlugs(): string[] {
   const files = fs.readdirSync(TEMPLATE_DIR, { withFileTypes: true });
   return files
-    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".ts") && entry.name.startsWith("page"))
+    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".html") && entry.name.startsWith("page"))
     .map((entry) => {
       const { name } = entry;
       return path.basename(name, path.extname(name));
