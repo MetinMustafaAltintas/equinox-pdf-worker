@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 import path from "node:path";
-import { ReadingTypes } from "../../types/reading.types";
+import { ReadingTypes } from '../types/reading.types';
 import { PreparedReadingContent } from "./pdf.types";
 import { compileHandlebarsPages } from "../template-compiler";
 

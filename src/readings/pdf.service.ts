@@ -117,7 +117,7 @@ export default class PDFService {
 			
 		} catch (error) {
 			console.error(`❌ Error processing page ${pageIndex + 1}:`, error);
-			throw new Error(`Failed to process page ${pageIndex + 1}: ${error.message}`);
+			throw new Error(`Failed to process page ${pageIndex + 1}: ${error}`);
 		} finally {
 			// Always close the page to free up memory
 			if (page) {

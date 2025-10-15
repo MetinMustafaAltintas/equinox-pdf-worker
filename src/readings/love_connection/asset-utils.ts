@@ -30,7 +30,7 @@ export function importAsset(assetPath: string, mimeType: string): string {
     const base64 = readFileSync(resolvedPath, 'base64');
     return `data:${mimeType};base64,${base64}`;
   } catch (error) {
-    console.warn(`Error loading asset ${assetPath}:`, error.message);
+    console.warn(`Error loading asset ${assetPath}:`, error);
     // Return a placeholder to prevent crashes
     return `data:${mimeType};base64,`;
   }
