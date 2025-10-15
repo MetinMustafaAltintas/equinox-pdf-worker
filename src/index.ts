@@ -131,7 +131,7 @@ async function processRender(payload: RenderPayload) {
           Body: pdfBuffer,
           ContentType: "application/pdf",
           ACL: "public-read",
-          CacheControl: "public, max-age=31536000, immutable",
+          //CacheControl: "public, max-age=31536000, immutable",
         })
       );
       console.log("📤 Uploaded with ACL=fallback");
