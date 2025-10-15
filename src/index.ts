@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
-import { S3, PutObjectCommand } from "@aws-sdk/client-s3";
 import fetch from "cross-fetch";
 import PDFService from "./readings/pdf.service";
+import { uploadBufferToSpaces } from "./readings/spaces.helper";
 
 const app = express();
 app.use(express.json({ limit: "10mb" }));
@@ -19,23 +19,6 @@ const CONCURRENCY = Number(process.env.CONCURRENCY || 1);
 
 const WORKER_TOKEN = process.env.WORKER_TOKEN || "";
 const CALLBACK_TOKEN = process.env.CALLBACK_TOKEN || "";
-
-const SPACES_ENDPOINT = process.env.SPACES_ENDPOINT;
-const SPACES_REGION = process.env.SPACES_REGION;
-const SPACES_BUCKET = process.env.SPACES_BUCKET;
-const ACCESS_KEY_ID = process.env.SPACES_KEY_ID || "";
-const SECRET_ACCESS_KEY = process.env.SPACES_SECRET || "";
-
-
-const s3 = new S3({
-  endpoint: SPACES_ENDPOINT,
-  region: SPACES_REGION,
-  forcePathStyle: false,
-  credentials: {
-    accessKeyId: ACCESS_KEY_ID,
-    secretAccessKey: SECRET_ACCESS_KEY,
-  },
-});
 
 app.get("/healthz", (_req: Request, res: Response) => {
   res.json({ ok: true, concurrency: CONCURRENCY });
@@ -99,34 +82,22 @@ async function processRender(payload: RenderPayload) {
       throw new Error("Empty PDF buffer");
     }
 
-    console.log("🪣 Preparing upload to Spaces:", {
-      bucket: SPACES_BUCKET,
-      key,
-      contentType: "application/pdf",
-      contentLength: pdfBuffer.byteLength,
-      endpoint: SPACES_ENDPOINT,
-      region: SPACES_REGION,
-    });
-
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: SPACES_BUCKET,
-        Key: key,
-        Body: pdfBuffer,
-        ContentType: "application/pdf",
-        ACL: "public-read",
-      })
+    console.log("🪣 Preparing upload via spaces.helper...");
+    const uploadResult = await uploadBufferToSpaces(
+      pdfBuffer,
+      output!.fileName,
+      "application/pdf",
+      folder
     );
 
-    const publicUrl = `https://${SPACES_BUCKET}.${SPACES_REGION}.digitaloceanspaces.com/${key}`;
-    console.log(`📤 Uploaded (public): ${publicUrl}`);
+    console.log(`📤 Uploaded successfully to: ${uploadResult.url}`);
 
     await sendCallback(callbackUrl, {
       jobId,
       readingId,
       status: "done",
-      url: publicUrl,
-      key,
+      url: uploadResult.url,
+      key: uploadResult.key,
     });
 
     console.log(`✅ Render complete for job ${jobId}`);
