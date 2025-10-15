@@ -20,9 +20,9 @@ const CONCURRENCY = Number(process.env.CONCURRENCY || 1);
 const WORKER_TOKEN = process.env.WORKER_TOKEN || "";
 const CALLBACK_TOKEN = process.env.CALLBACK_TOKEN || "";
 
-const SPACES_ENDPOINT = process.env.SPACES_ENDPOINT!;
-const SPACES_REGION = process.env.SPACES_REGION!;
-const SPACES_BUCKET = process.env.SPACES_BUCKET!;
+const SPACES_ENDPOINT = process.env.SPACES_ENDPOINT;
+const SPACES_REGION = process.env.SPACES_REGION;
+const SPACES_BUCKET = process.env.SPACES_BUCKET;
 const ACCESS_KEY_ID = process.env.SPACES_KEY_ID || "";
 const SECRET_ACCESS_KEY = process.env.SPACES_SECRET || "";
 
