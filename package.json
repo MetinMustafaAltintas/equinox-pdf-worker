@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && tsc && npm run copy:templates",
+    "copy:templates": "mkdir -p dist/readings/love_connection dist/readings/birth_chart dist/readings/assets && cp -R src/readings/love_connection/*.html dist/readings/love_connection/ && cp -R src/readings/birth_chart/*.html dist/readings/birth_chart/ && cp -R src/readings/assets dist/readings/assets",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts"
   },
