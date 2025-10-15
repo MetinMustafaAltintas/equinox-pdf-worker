@@ -99,6 +99,44 @@ async function processRender(payload: RenderPayload) {
       throw new Error("Empty PDF buffer");
     }
 
+        // Extra logging before upload
+    console.log("🪣 Preparing upload to Spaces:", {
+      bucket: SPACES_BUCKET,
+      key,
+      contentType: "application/pdf",
+      contentLength: pdfBuffer.byteLength,
+      endpoint: SPACES_ENDPOINT,
+      region: SPACES_REGION,
+    });
+
+        // 1) Try upload WITHOUT ACL (recommended when bucket policy handles public access)
+    try {
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: SPACES_BUCKET,
+          Key: key,
+          Body: pdfBuffer,
+          ContentType: "application/pdf",
+          CacheControl: "public, max-age=31536000, immutable",
+        })
+      );
+      console.log("📤 Uploaded without ACL");
+    } catch (e) {
+      console.error("PutObject without ACL failed:", e);
+      // 2) Fallback: try WITH ACL
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: SPACES_BUCKET,
+          Key: key,
+          Body: pdfBuffer,
+          ContentType: "application/pdf",
+          ACL: "public-read",
+          CacheControl: "public, max-age=31536000, immutable",
+        })
+      );
+      console.log("📤 Uploaded with ACL=fallback");
+    }
+/*
     await s3.send(
       new PutObjectCommand({
         Bucket: SPACES_BUCKET,
@@ -108,7 +146,7 @@ async function processRender(payload: RenderPayload) {
         ACL: "public-read",
       })
     );
-
+*/
     const publicUrl = `https://${SPACES_BUCKET}.${SPACES_REGION}.digitaloceanspaces.com/${key}`;
     console.log(`📤 Uploaded (public): ${publicUrl}`);
 
