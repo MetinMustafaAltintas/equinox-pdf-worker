@@ -1,120 +1,160 @@
-import express from "express";
-import type { Request, Response } from "express";
+import express, { Request, Response } from "express";
 import { S3, PutObjectCommand } from "@aws-sdk/client-s3";
 import fetch from "cross-fetch";
-import puppeteer from "puppeteer";
-import PQueue from "p-queue";
+import PDFService from "./readings/pdf.service";
 
 const app = express();
 app.use(express.json({ limit: "10mb" }));
 
-app.use((req, res, next) => {
-  console.log('🛰️ Incoming Request:', req.method, req.url);
-  console.log('📦 Body:', req.body);
+app.use((req, _res, next) => {
+  console.log("🛰️ Incoming Request:", req.method, req.url);
+  const brief =
+    typeof req.body === "object" && req.body ? Object.keys(req.body) : typeof req.body;
+  console.log("📦 Body keys/type:", brief);
   next();
 });
 
 const PORT = Number(process.env.PORT || 8080);
 const CONCURRENCY = Number(process.env.CONCURRENCY || 1);
+
+const WORKER_TOKEN = process.env.WORKER_TOKEN || "";
 const CALLBACK_TOKEN = process.env.CALLBACK_TOKEN || "";
 
+const SPACES_ENDPOINT = process.env.SPACES_ENDPOINT!;
+const SPACES_REGION = process.env.SPACES_REGION!;
+const SPACES_BUCKET = process.env.SPACES_BUCKET!;
+const ACCESS_KEY_ID = process.env.SPACES_KEY_ID || "";
+const SECRET_ACCESS_KEY = process.env.SPACES_SECRET || "";
+
+
 const s3 = new S3({
-  endpoint: process.env.SPACES_ENDPOINT!,
-  region: process.env.SPACES_REGION!,
-  credentials: { accessKeyId: process.env.SPACES_KEY!, secretAccessKey: process.env.SPACES_SECRET! }
+  endpoint: SPACES_ENDPOINT,
+  region: SPACES_REGION,
+  forcePathStyle: false,
+  credentials: {
+    accessKeyId: ACCESS_KEY_ID,
+    secretAccessKey: SECRET_ACCESS_KEY,
+  },
 });
 
-const queue = new PQueue({ concurrency: CONCURRENCY });
+app.get("/healthz", (_req: Request, res: Response) => {
+  res.json({ ok: true, concurrency: CONCURRENCY });
+});
 
-async function renderPdf(html: string): Promise<Buffer> {
-  console.log("🧩 renderPdf started...");
-  const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
-  try {
-    const page = await browser.newPage();
-    console.log("📄 Setting HTML content...");
-    await page.setContent(html, { waitUntil: "networkidle0", timeout: 120000 });
-    console.log("🖨️ Generating PDF...");
-    const buf = await page.pdf({ format: "a4", printBackground: true, preferCSSPageSize: true, timeout: 120000 });
-    console.log("✅ PDF generated successfully!");
-    return Buffer.from(buf);
-  } catch (err) {
-    console.error("❌ renderPdf error:", err);
-    throw err;
-  } finally {
-    await browser.close();
-  }
-}
+type PdfPage = { head?: string; body: string; htmlAttributes?: Record<string, string> };
 
-type Payload = {
+type RenderPayload = {
   jobId: string;
   readingId: string;
   type: string;
-  pdfData?: { pages?: Array<{ head?: string; body: string; htmlAttributes?: Record<string, string> }>; assetsBasePath?: string; meta?: Record<string, any> };
-  html?: string;
+
+  pdfData?: { pages?: PdfPage[]; meta?: Record<string, any> };
+  compile?: { type: string; data: any };
+
   output?: { fileName: string; folder?: string };
   callbackUrl: string;
   token?: string;
 };
 
-function attrs(obj?: Record<string, string>) {
-  if (!obj) return "";
-  return Object.entries(obj).map(([k, v]) => `${k}="${String(v).replace(/"/g, "&quot;")}"`).join(" ");
-}
-
-async function processJob(data: Payload) {
-    const { jobId, readingId, type, pdfData, html, output, callbackUrl } = data;
-
-    let htmlToRender = "";
-        if (html) {
-            htmlToRender = html;
-        } else if (pdfData?.pages?.length) {
-            const allPagesHtml = pdfData.pages
-            .map((page, index) => {
-            const head = page.head || "";
-            const body = page.body || "";
-            const attrsString = attrs(page.htmlAttributes);
-            return `<section data-page="${index + 1}"><html ${attrsString}><head>${head}</head><body>${body}</body></html></section>`;
-        })
-        .join("<div style='page-break-after: always;'></div>");
-        htmlToRender = `<html><head></head><body>${allPagesHtml}</body></html>`;
-        } else {
-            htmlToRender = `<html><body><h1>${type}</h1><pre>${JSON.stringify(pdfData?.meta || {}, null, 2)}</pre></body></html>`;
-        }
-
-        console.log(`⚙️ Starting render for job ${jobId}, ${pdfData?.pages?.length || 0} pages...`);
-        const pdfBuffer = await renderPdf(htmlToRender);
-        console.log(`✅ Render complete for job ${jobId}, buffer size: ${pdfBuffer.length}`);
-        
-    const folder = output?.folder || "readings";
-    const fileName = output?.fileName || `${readingId}-${Date.now()}.pdf`;
-    const key = `${folder}/${fileName}`;
-
-    await s3.send(new PutObjectCommand({ Bucket: process.env.SPACES_BUCKET!, Key: key, Body: pdfBuffer, ContentType: "application/pdf", ACL: "private" }));
-
-    const fileUrl = `${process.env.SPACES_ENDPOINT!.replace("https://", `https://${process.env.SPACES_BUCKET}.`)}/${key}`;
-
-    await fetch(callbackUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Callback-Token": CALLBACK_TOKEN },
-        body: JSON.stringify({ jobId, readingId, status: "done", url: fileUrl })
-    });
-
-    return { url: fileUrl, key };
-}
-
-app.get("/healthz", (_req: Request, res: Response) => res.json({ ok: true, queueSize: queue.size, pending: queue.pending }));
-
 app.post("/render", async (req: Request, res: Response) => {
-  const payload: Payload = req.body;
-  const hToken = req.get("X-Worker-Token");
-  if (CALLBACK_TOKEN && hToken !== CALLBACK_TOKEN && payload.token !== CALLBACK_TOKEN) {
+  const payload = req.body as RenderPayload;
+
+  const headerToken = req.get("X-Worker-Token");
+  const bodyToken = payload?.token;
+  if (WORKER_TOKEN && headerToken !== WORKER_TOKEN && bodyToken !== WORKER_TOKEN) {
     return res.status(401).json({ error: "unauthorized" });
   }
-  if (!payload?.jobId || !payload?.readingId || !payload?.callbackUrl) {
-    return res.status(400).json({ error: "jobId, readingId, callbackUrl required" });
+
+  if (!payload?.jobId || !payload?.readingId || !payload?.type) {
+    return res.status(400).json({ error: "jobId, readingId, type zorunludur" });
   }
-  queue.add(() => processJob(payload)).catch((err) => console.error("Job failed:", payload.jobId, err));
-  return res.status(202).json({ accepted: true, jobId: payload.jobId });
+  if (!payload?.output?.fileName) {
+    return res.status(400).json({ error: "output.fileName zorunludur" });
+  }
+  if (!payload?.callbackUrl) {
+    return res.status(400).json({ error: "callbackUrl zorunludur" });
+  }
+
+  processRender(payload).catch((err) => {
+    console.error("❌ processRender unhandled error:", err);
+  });
+
+  return res.json({ accepted: true, jobId: payload.jobId });
 });
 
-app.listen(PORT, () => console.log(`🚀 PDF Web Service started on :${PORT} (concurrency=${CONCURRENCY})`));
+async function processRender(payload: RenderPayload) {
+  const { jobId, readingId, type, pdfData, compile, output, callbackUrl } = payload;
+  const folder = output?.folder || "readings";
+  const key = `${folder}/${output!.fileName}`;
+
+  try {
+    console.log(`⚙️ Starting render for job ${jobId}...`);
+
+    let pdfBuffer: Buffer | null = null;
+
+    if (pdfData?.pages && Array.isArray(pdfData.pages) && pdfData.pages.length > 0) {
+      pdfBuffer = await PDFService.htmlToPdf({ pages: pdfData.pages });
+    }
+    else if (compile?.type) {
+      pdfBuffer = await PDFService.startProcessing(compile.type as any, compile.data);
+    } else {
+      throw new Error("No pdfData.pages or compile payload provided");
+    }
+
+    if (!pdfBuffer || !pdfBuffer.length) {
+      throw new Error("Empty PDF buffer");
+    }
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: SPACES_BUCKET,
+        Key: key,
+        Body: pdfBuffer,
+        ContentType: "application/pdf",
+        ACL: "public-read",
+      })
+    );
+
+    const publicUrl = `https://${SPACES_BUCKET}.${SPACES_REGION}.digitaloceanspaces.com/${key}`;
+    console.log(`📤 Uploaded (public): ${publicUrl}`);
+
+    await sendCallback(callbackUrl, {
+      jobId,
+      readingId,
+      status: "done",
+      url: publicUrl,
+      key,
+    });
+
+    console.log(`✅ Render complete for job ${jobId}`);
+  } catch (error: any) {
+    console.error(`❌ Job failed: ${jobId}`, error);
+
+    await sendCallback(callbackUrl, {
+      jobId,
+      readingId,
+      status: "failed",
+      error: error?.message || String(error),
+    });
+  }
+}
+
+async function sendCallback(url: string, body: Record<string, any>) {
+  try {
+    const r = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(CALLBACK_TOKEN ? { "X-Callback-Token": CALLBACK_TOKEN } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    console.log("🔔 Callback sent:", r.status);
+  } catch (err) {
+    console.error("❌ Callback send error:", err);
+  }
+}
+
+app.listen(PORT, () => {
+  console.log(`🚀 PDF Web Service started on :${PORT} (concurrency=${CONCURRENCY})`);
+});
