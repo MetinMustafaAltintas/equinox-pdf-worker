@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "type": "commonjs",
   "main": "dist/index.js",
-  "scripts": {
-    "clean": "rm -rf dist",
-    "build": "npm run clean && tsc && npm run copy:templates",
-    "copy:templates": "mkdir -p dist/readings/love_connection dist/readings/birth_chart dist/readings/assets && cp -R src/readings/love_connection/*.html dist/readings/love_connection/ && cp -R src/readings/birth_chart/*.html dist/readings/birth_chart/ && cp -R src/readings/assets dist/readings/assets",
-    "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts"
-  },
+"scripts": {
+  "clean": "rm -rf dist",
+  "build": "npm run clean && tsc && npm run copy:templates",
+  "copy:templates": "mkdir -p dist/readings/love_connection dist/readings/birth_chart dist/readings/assets && (cp -R src/readings/love_connection/*.html dist/readings/love_connection/ 2>/dev/null || true) && (cp -R src/readings/birth_chart/*.html dist/readings/birth_chart/ 2>/dev/null || true) && (cp -R src/readings/assets dist/readings/assets 2>/dev/null || true)",
+  "start": "node dist/index.js",
+  "dev": "ts-node src/index.ts"
+},
   "dependencies": {
     "@aws-sdk/client-s3": "^3.650.0",
     "cross-fetch": "^3.1.8",

@@ -47,10 +47,7 @@ type RenderPayload = {
   jobId: string;
   readingId: string;
   type: string;
-
-  pdfData?: { pages?: PdfPage[]; meta?: Record<string, any> };
-  compile?: { type: string; data: any };
-
+  compile: { type: string; data: any };
   output?: { fileName: string; folder?: string };
   callbackUrl: string;
   token?: string;
@@ -83,7 +80,7 @@ app.post("/render", async (req: Request, res: Response) => {
 });
 
 async function processRender(payload: RenderPayload) {
-  const { jobId, readingId, type, pdfData, compile, output, callbackUrl } = payload;
+  const { jobId, readingId, type, compile, output, callbackUrl } = payload;
   const folder = output?.folder || "readings";
   const key = `${folder}/${output!.fileName}`;
 
@@ -92,13 +89,10 @@ async function processRender(payload: RenderPayload) {
 
     let pdfBuffer: Buffer | null = null;
 
-    if (pdfData?.pages && Array.isArray(pdfData.pages) && pdfData.pages.length > 0) {
-      pdfBuffer = await PDFService.htmlToPdf({ pages: pdfData.pages });
-    }
-    else if (compile?.type) {
+    if (compile?.type) {
       pdfBuffer = await PDFService.startProcessing(compile.type as any, compile.data);
     } else {
-      throw new Error("No pdfData.pages or compile payload provided");
+      throw new Error("compile.type zorunludur");
     }
 
     if (!pdfBuffer || !pdfBuffer.length) {
