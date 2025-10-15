@@ -21,7 +21,7 @@ const WORKER_TOKEN = process.env.WORKER_TOKEN || "";
 const CALLBACK_TOKEN = process.env.CALLBACK_TOKEN || "";
 
 const SPACES_ENDPOINT = process.env.SPACES_ENDPOINT;
-const SPACES_REGION = "us-east-1";
+const SPACES_REGION = process.env.SPACES_REGION;
 const SPACES_BUCKET = process.env.SPACES_BUCKET;
 const ACCESS_KEY_ID = process.env.SPACES_KEY_ID || "";
 const SECRET_ACCESS_KEY = process.env.SPACES_SECRET || "";
@@ -99,7 +99,6 @@ async function processRender(payload: RenderPayload) {
       throw new Error("Empty PDF buffer");
     }
 
-        // Extra logging before upload
     console.log("🪣 Preparing upload to Spaces:", {
       bucket: SPACES_BUCKET,
       key,
@@ -109,34 +108,6 @@ async function processRender(payload: RenderPayload) {
       region: SPACES_REGION,
     });
 
-        // 1) Try upload WITHOUT ACL (recommended when bucket policy handles public access)
-    try {
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: SPACES_BUCKET,
-          Key: key,
-          Body: pdfBuffer,
-          ContentType: "application/pdf",
-          CacheControl: "public, max-age=31536000, immutable",
-        })
-      );
-      console.log("📤 Uploaded without ACL");
-    } catch (e) {
-      console.error("PutObject without ACL failed:", e);
-      // 2) Fallback: try WITH ACL
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: SPACES_BUCKET,
-          Key: key,
-          Body: pdfBuffer,
-          ContentType: "application/pdf",
-          ACL: "public-read",
-          //CacheControl: "public, max-age=31536000, immutable",
-        })
-      );
-      console.log("📤 Uploaded with ACL=fallback");
-    }
-/*
     await s3.send(
       new PutObjectCommand({
         Bucket: SPACES_BUCKET,
@@ -146,7 +117,7 @@ async function processRender(payload: RenderPayload) {
         ACL: "public-read",
       })
     );
-*/
+
     const publicUrl = `https://${SPACES_BUCKET}.${SPACES_REGION}.digitaloceanspaces.com/${key}`;
     console.log(`📤 Uploaded (public): ${publicUrl}`);
 
