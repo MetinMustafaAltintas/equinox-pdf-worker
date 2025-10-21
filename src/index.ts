@@ -4,7 +4,7 @@ import PDFService from "./readings/pdf.service";
 import { uploadBufferToSpaces } from "./readings/spaces.helper";
 
 const app = express();
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "400mb" }));
 
 app.use((req, _res, next) => {
   console.log("🛰️ Incoming Request:", req.method, req.url);
