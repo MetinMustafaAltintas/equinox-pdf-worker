@@ -14,12 +14,17 @@ function isRecord(value: unknown): value is StringMap {
 
 function listTemplatePageSlugs(): string[] {
   const files = fs.readdirSync(TEMPLATE_DIR, { withFileTypes: true });
+
   return files
-    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".ts") && entry.name.startsWith("page"))
-    .map((entry) => {
-      const { name } = entry;
-      return path.basename(name, path.extname(name));
+    .filter((entry) => {
+      if (!entry.isFile()) return false;
+      if (!entry.name.startsWith("page")) return false;
+
+      const name = entry.name.toLowerCase();
+      if (name.endsWith(".d.ts") || name.endsWith(".map")) return false;
+      return /\.(js|ts|hbs)$/.test(name);
     })
+    .map((entry) => path.basename(entry.name, path.extname(entry.name)))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }
 
