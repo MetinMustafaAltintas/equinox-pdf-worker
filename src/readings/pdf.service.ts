@@ -104,6 +104,8 @@ export default class PDFService {
 				timeout: 120000 
 			});
 
+			await page.emulateMediaType("screen");
+
 			const pdfBuffer = await page.pdf({
 				format: 'a4',
 				timeout: 50000,
