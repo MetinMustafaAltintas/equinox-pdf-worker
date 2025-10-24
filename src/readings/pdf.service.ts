@@ -130,22 +130,35 @@ export default class PDFService {
 	 * Create proper HTML structure for a single page
 	 */
 	private static createSinglePageHtml(pageContent: any): string {
-		const headContent = pageContent?.head || '';
-		const bodyContent = pageContent?.body || '';
-		const htmlAttributes = pageContent?.htmlAttributes || '';
+  		const rawHtml = pageContent?.html;
+  		if (typeof rawHtml === 'string' && rawHtml.trim().length > 0) {
+    		return rawHtml;
+  		}
 
-		return `<!DOCTYPE html>
-<html${htmlAttributes ? ' ' + htmlAttributes : ''}>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Reading Report - Page</title>
-	${headContent}
-</head>
-<body>
-	${bodyContent}
-</body>
-</html>`;
+  		const headContent =
+    	pageContent?.head ??
+    	pageContent?.htmlHead ??
+    	'';
+  		const bodyContent =
+    	pageContent?.body ??
+    	pageContent?.htmlBody ??
+    	pageContent?.content ??
+    	'';
+
+  		const htmlAttributes = pageContent?.htmlAttributes || '';
+
+  		return `<!DOCTYPE html>
+		<html${htmlAttributes ? ' ' + htmlAttributes : ''}>
+		<head>
+  		<meta charset="UTF-8">
+  		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  		<title>Reading Report - Page</title>
+  		${headContent}
+		</head>
+		<body>
+  		${bodyContent}
+		</body>
+		</html>`;
 	}
 
 	/**
